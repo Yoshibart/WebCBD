@@ -2,7 +2,9 @@ package com.mase.model;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -12,6 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
@@ -22,8 +25,11 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    @Column(name = "public_id", unique = true, length = 36)
+    private String publicId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     @ManyToMany
@@ -46,6 +52,14 @@ public class Cart {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getPublicId() {
+        return publicId;
+    }
+
+    public void setPublicId(String publicId) {
+        this.publicId = publicId;
     }
 
     public User getUser() {
@@ -72,5 +86,12 @@ public class Cart {
     public void removeProduct(Product product) {
         products.remove(product);
         product.getCarts().remove(this);
+    }
+
+    @PrePersist
+    void ensurePublicId() {
+        if (publicId == null || publicId.isBlank()) {
+            publicId = UUID.randomUUID().toString();
+        }
     }
 }
