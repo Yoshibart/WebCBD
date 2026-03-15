@@ -24,6 +24,6 @@ class ApplicationUserDetailsTest {
         assertEquals("secret", details.getPassword());
         Collection<? extends GrantedAuthority> authorities = details.getAuthorities();
         assertEquals(1, authorities.size());
-        assertTrue(authorities.iterator().next().getAuthority().equals("ROLE_ADMIN"));
+        assertEquals("ROLE_ADMIN", authorities.iterator().next().getAuthority());
     }
 }

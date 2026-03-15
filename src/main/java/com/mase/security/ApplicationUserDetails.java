@@ -11,7 +11,7 @@ import com.mase.model.User;
 
 public class ApplicationUserDetails implements UserDetails {
 
-    private final User user;
+    private final transient User user;
 
     public ApplicationUserDetails(User user) {
         this.user = user;

@@ -1,13 +1,15 @@
 package com.mase.security;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -37,7 +39,7 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
@@ -47,9 +49,11 @@ public class SecurityConfiguration {
                         .accessDeniedHandler((request, response, accessDeniedException) ->
                                 apiErrorResponseWriter.write(response, HttpStatus.FORBIDDEN, "Forbidden")))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**", "/favicon.ico").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**", "/favicon.ico")
+                        .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ecommerce/v1/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/ecommerce/v1/products", "/api/ecommerce/v1/products/**")
+                        .requestMatchers(HttpMethod.GET, "/api/ecommerce/v1/products",
+                                "/api/ecommerce/v1/products/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ecommerce/v1/carts").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ecommerce/v1/carts/*").permitAll()
@@ -68,12 +72,13 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager() {
+        return new ProviderManager(List.of(authenticationProvider()));
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
+
 }

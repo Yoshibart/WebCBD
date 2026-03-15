@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
@@ -35,6 +36,9 @@ class TokenRevocationServiceImplTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private TokenRevocationCleanupService cleanupService;
+
     @InjectMocks
     private TokenRevocationServiceImpl service;
 
@@ -50,7 +54,7 @@ class TokenRevocationServiceImplTest {
 
         service.revoke(token);
 
-        verify(revokedTokenRepository).deleteByExpiresAtBefore(any(Instant.class));
+        verify(cleanupService).deleteExpiredTokens();
         ArgumentCaptor<RevokedToken> captor = ArgumentCaptor.forClass(RevokedToken.class);
         verify(revokedTokenRepository).save(captor.capture());
         RevokedToken saved = captor.getValue();
@@ -67,7 +71,7 @@ class TokenRevocationServiceImplTest {
 
         service.revoke(token);
 
-        verify(revokedTokenRepository).deleteByExpiresAtBefore(any(Instant.class));
+        verify(cleanupService).deleteExpiredTokens();
         verify(revokedTokenRepository, never()).save(any(RevokedToken.class));
     }
 
@@ -79,6 +83,8 @@ class TokenRevocationServiceImplTest {
         when(revokedTokenRepository.existsByTokenHash(tokenHash)).thenReturn(true);
 
         assertTrue(service.isRevoked(token));
+
+        verifyNoMoreInteractions(cleanupService);
     }
 
     private static String hash(String token) {

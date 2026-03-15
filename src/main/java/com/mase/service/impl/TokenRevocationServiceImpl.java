@@ -3,7 +3,6 @@ package com.mase.service.impl;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
 import java.util.HexFormat;
 
 import org.springframework.stereotype.Service;
@@ -19,16 +18,21 @@ public class TokenRevocationServiceImpl implements TokenRevocationService {
 
     private final RevokedTokenRepository revokedTokenRepository;
     private final JwtService jwtService;
+    private final TokenRevocationCleanupService cleanupService;
 
-    public TokenRevocationServiceImpl(RevokedTokenRepository revokedTokenRepository, JwtService jwtService) {
+    public TokenRevocationServiceImpl(
+            RevokedTokenRepository revokedTokenRepository,
+            JwtService jwtService,
+            TokenRevocationCleanupService cleanupService) {
         this.revokedTokenRepository = revokedTokenRepository;
         this.jwtService = jwtService;
+        this.cleanupService = cleanupService;
     }
 
     @Override
     @Transactional
     public void revoke(String token) {
-        deleteExpiredTokens();
+        cleanupService.deleteExpiredTokens();
 
         String tokenHash = hash(token);
         if (revokedTokenRepository.existsByTokenHash(tokenHash)) {
@@ -42,11 +46,6 @@ public class TokenRevocationServiceImpl implements TokenRevocationService {
     @Transactional(readOnly = true)
     public boolean isRevoked(String token) {
         return revokedTokenRepository.existsByTokenHash(hash(token));
-    }
-
-    @Transactional
-    protected void deleteExpiredTokens() {
-        revokedTokenRepository.deleteByExpiresAtBefore(Instant.now());
     }
 
     private String hash(String token) {

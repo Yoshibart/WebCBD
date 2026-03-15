@@ -16,9 +16,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.mase.model.Role;
 
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Encoders;
-import io.jsonwebtoken.security.Keys;
 
 // Unit tests for JwtService token behavior.
 class JwtServiceTest {
@@ -26,7 +25,7 @@ class JwtServiceTest {
     @Test
     // Verifies token creation and claim extraction.
     void generateToken_and_extractUsername() {
-        String secret = Encoders.BASE64.encode(Keys.secretKeyFor(SignatureAlgorithm.HS256).getEncoded());
+        String secret = Encoders.BASE64.encode(Jwts.SIG.HS256.key().build().getEncoded());
         JwtService jwtService = new JwtService(secret, 5_000L);
 
         com.mase.model.User user = new com.mase.model.User("admin", "admin@example.com", "pass", Role.ADMIN);
@@ -40,7 +39,7 @@ class JwtServiceTest {
     @Test
     // Verifies a valid token matches the expected user.
     void isTokenValid_returnsTrueForMatchingUser() {
-        String secret = Encoders.BASE64.encode(Keys.secretKeyFor(SignatureAlgorithm.HS256).getEncoded());
+        String secret = Encoders.BASE64.encode(Jwts.SIG.HS256.key().build().getEncoded());
         JwtService jwtService = new JwtService(secret, 5_000L);
 
         com.mase.model.User user = new com.mase.model.User("admin", "admin@example.com", "pass", Role.ADMIN);
@@ -57,7 +56,7 @@ class JwtServiceTest {
     @Test
     // Verifies expired tokens are treated as invalid.
     void isTokenValid_returnsFalseForExpiredToken() {
-        String secret = Encoders.BASE64.encode(Keys.secretKeyFor(SignatureAlgorithm.HS256).getEncoded());
+        String secret = Encoders.BASE64.encode(Jwts.SIG.HS256.key().build().getEncoded());
         JwtService jwtService = new JwtService(secret, -1_000L);
 
         com.mase.model.User user = new com.mase.model.User("admin", "admin@example.com", "pass", Role.ADMIN);
