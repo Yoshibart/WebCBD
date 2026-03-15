@@ -1,3 +1,11 @@
+def runMvn(String args) {
+  if (isUnix()) {
+    sh "./mvnw ${args}"
+  } else {
+    bat "mvnw.cmd ${args}"
+  }
+}
+
 pipeline {
   agent any
   options { timestamps(); skipDefaultCheckout(true) }
@@ -20,23 +28,27 @@ pipeline {
     stage('Build & Tests') {
       steps {
         script {
-          if (!params.RUN_IT) {
-            bat "mvn -B clean verify -DskipITs=true -Dspring.profiles.active=test"
-          } else {
-            bat "mvn -B clean verify -DskipITs=false -Dspring.profiles.active=test"
-          }
+          def baseArgs = "-B clean verify -Dspring.profiles.active=test"
+          def itArgs = params.RUN_IT ? "-DskipITs=false" : "-DskipITs=true"
+          runMvn("${baseArgs} ${itArgs}")
         }
       }
     }
 
     stage('Package') {
-      steps { bat 'mvn -B -DskipTests package' }
+      steps {
+        script {
+          runMvn("-B -DskipTests package")
+        }
+      }
     }
 
     stage('SonarQube Analysis') {
       steps {
         withSonarQubeEnv('LocalSonar') {
-          bat 'mvn -B sonar:sonar -Dsonar.projectKey=com.mase.webcbd:WebCBD -Dsonar.projectName=WebCBD-1'
+          script {
+            runMvn("-B sonar:sonar -Dsonar.projectKey=com.mase.webcbd:WebCBD -Dsonar.projectName=WebCBD-1")
+          }
         }
       }
     }
