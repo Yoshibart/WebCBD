@@ -1,21 +1,68 @@
 pipeline {
   agent any
+  options { timestamps(); skipDefaultCheckout(true) }
+  tools { jdk 'JDK21' }
+  triggers { pollSCM('H/5 * * * *') }
 
-  triggers {
-    pollSCM('H/5 * * * *')
+  parameters {
+    booleanParam(name: 'RUN_IT', defaultValue: false, description: 'Run integration/Selenium tests (Failsafe)')
+  }
+
+  environment {
+    MAVEN_OPTS = "-Dmaven.repo.local=.m2/repository"
   }
 
   stages {
     stage('Checkout') {
+      steps { checkout scm }
+    }
+
+    stage('Build & Tests') {
       steps {
-        checkout scm
+        script {
+          if (!params.RUN_IT) {
+            bat "mvn -B clean verify -DskipITs=true -Dspring.profiles.active=test"
+          } else {
+            bat "mvn -B clean verify -DskipITs=false -Dspring.profiles.active=test"
+          }
+        }
       }
     }
 
-    stage('Build + Coverage') {
+    stage('Package') {
+      steps { bat 'mvn -B -DskipTests package' }
+    }
+
+    stage('SonarQube Analysis') {
       steps {
-        sh './mvnw -B verify'
+        withSonarQubeEnv('LocalSonar') {
+          bat 'mvn -B sonar:sonar -Dsonar.projectKey=com.mase.webcbd:WebCBD -Dsonar.projectName=WebCBD-1'
+        }
       }
+    }
+
+    stage('Quality Gate') {
+      steps {
+        timeout(time: 10, unit: 'MINUTES') {
+          waitForQualityGate abortPipeline: true
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      junit testResults: '**/target/surefire-reports/*.xml, **/target/failsafe-reports/*.xml', allowEmptyResults: true
+      archiveArtifacts artifacts: '**/target/*.jar, **/target/*.war', allowEmptyArchive: true
+
+      publishHTML(target: [
+        reportDir: 'target/site/jacoco',
+        reportFiles: 'index.html',
+        reportName: 'JaCoCo Code Coverage',
+        keepAll: true,
+        alwaysLinkToLastBuild: true,
+        allowMissing: true
+      ])
     }
   }
 }
