@@ -1,7 +1,7 @@
 pipeline {
   agent any
   options { timestamps(); skipDefaultCheckout(true) }
-  tools { jdk 'JDK21' }
+  tools { jdk 'Java@21' }
   triggers { pollSCM('H/5 * * * *') }
 
   parameters {
