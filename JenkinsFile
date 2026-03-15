@@ -18,6 +18,7 @@ pipeline {
 
   environment {
     MAVEN_OPTS = "-Dmaven.repo.local=.m2/repository"
+    SONARQUBE_RAN = "false"
   }
 
   stages {
@@ -45,18 +46,34 @@ pipeline {
 
     stage('SonarQube Analysis') {
       steps {
-        withSonarQubeEnv('LocalSonar') {
-          script {
-            runMvn("-B sonar:sonar -Dsonar.projectKey=com.mase.webcbd:WebCBD -Dsonar.projectName=WebCBD-1")
+        script {
+          def hasSonarEnv = steps.metaClass.respondsTo(steps, 'withSonarQubeEnv', String)
+          if (hasSonarEnv) {
+            steps.withSonarQubeEnv('LocalSonar') {
+              runMvn("-B sonar:sonar -Dsonar.projectKey=com.mase.webcbd:WebCBD -Dsonar.projectName=WebCBD-1")
+            }
+            env.SONARQUBE_RAN = "true"
+          } else {
+            echo "SonarQube plugin not installed; skipping analysis."
           }
         }
       }
     }
 
     stage('Quality Gate') {
+      when {
+        expression { return env.SONARQUBE_RAN == "true" }
+      }
       steps {
-        timeout(time: 10, unit: 'MINUTES') {
-          waitForQualityGate abortPipeline: true
+        script {
+          def hasQualityGate = steps.metaClass.respondsTo(steps, 'waitForQualityGate', Map)
+          if (hasQualityGate) {
+            timeout(time: 10, unit: 'MINUTES') {
+              waitForQualityGate abortPipeline: true
+            }
+          } else {
+            echo "SonarQube plugin not installed; skipping quality gate."
+          }
         }
       }
     }
@@ -67,14 +84,20 @@ pipeline {
       junit testResults: '**/target/surefire-reports/*.xml, **/target/failsafe-reports/*.xml', allowEmptyResults: true
       archiveArtifacts artifacts: '**/target/*.jar, **/target/*.war', allowEmptyArchive: true
 
-      publishHTML(target: [
-        reportDir: 'target/site/jacoco',
-        reportFiles: 'index.html',
-        reportName: 'JaCoCo Code Coverage',
-        keepAll: true,
-        alwaysLinkToLastBuild: true,
-        allowMissing: true
-      ])
+      script {
+        if (fileExists('target/site/jacoco/index.html')) {
+          publishHTML(target: [
+            reportDir: 'target/site/jacoco',
+            reportFiles: 'index.html',
+            reportName: 'JaCoCo Code Coverage',
+            keepAll: true,
+            alwaysLinkToLastBuild: true,
+            allowMissing: true
+          ])
+        } else {
+          echo "JaCoCo report not found; skipping HTML publish."
+        }
+      }
     }
   }
 }
