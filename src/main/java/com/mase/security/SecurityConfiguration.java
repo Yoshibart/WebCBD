@@ -47,6 +47,7 @@ public class SecurityConfiguration {
                         .accessDeniedHandler((request, response, accessDeniedException) ->
                                 apiErrorResponseWriter.write(response, HttpStatus.FORBIDDEN, "Forbidden")))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**", "/favicon.ico").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ecommerce/v1/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ecommerce/v1/products", "/api/ecommerce/v1/products/**")
                         .permitAll()
