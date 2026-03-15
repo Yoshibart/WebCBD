@@ -47,13 +47,14 @@ pipeline {
     stage('SonarQube Analysis') {
       steps {
         script {
-          def hasSonarEnv = steps.metaClass.respondsTo(steps, 'withSonarQubeEnv', String)
-          if (hasSonarEnv) {
-            steps.withSonarQubeEnv('LocalSonar') {
+          try {
+            withSonarQubeEnv('LocalSonar') {
               runMvn("-B sonar:sonar -Dsonar.projectKey=com.mase.webcbd:WebCBD -Dsonar.projectName=WebCBD-1")
             }
             env.SONARQUBE_RAN = "true"
-          } else {
+          } catch (NoSuchMethodError e) {
+            echo "SonarQube plugin not installed; skipping analysis."
+          } catch (MissingMethodException e) {
             echo "SonarQube plugin not installed; skipping analysis."
           }
         }
@@ -66,12 +67,13 @@ pipeline {
       }
       steps {
         script {
-          def hasQualityGate = steps.metaClass.respondsTo(steps, 'waitForQualityGate', Map)
-          if (hasQualityGate) {
+          try {
             timeout(time: 10, unit: 'MINUTES') {
               waitForQualityGate abortPipeline: true
             }
-          } else {
+          } catch (NoSuchMethodError e) {
+            echo "SonarQube plugin not installed; skipping quality gate."
+          } catch (MissingMethodException e) {
             echo "SonarQube plugin not installed; skipping quality gate."
           }
         }
