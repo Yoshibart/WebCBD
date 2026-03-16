@@ -2,8 +2,11 @@ package com.mase.service.impl;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.mase.dto.ProductDto;
@@ -21,6 +24,14 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDto> getProductsPage(Pageable pageable) {
+        return productRepository.findAll(pageable)
+                .map(this::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ProductDto> getAllProducts() {
         return productRepository.findAll()
                 .stream()
