@@ -19,7 +19,7 @@ Feature: E-commerce REST API integration tests
     And request { name: 'Lamp', category: 'Accessories', price: 19.99, description: 'Best lamp' }
     When method post
     Then status 200
-    And match response.name == 'Karate Lamp'
+    And match response.name == 'Lamp'
     And match response.category == 'Accessories'
 
   Scenario: Create cart and add a product
