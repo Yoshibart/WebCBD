@@ -1,6 +1,7 @@
 package com.mase.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -110,6 +111,54 @@ class CartServiceImplTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> cartService.addProduct("cart-1", 99L));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Product not found", ex.getReason());
+    }
+
+    @Test
+    // Verifies removing a product updates cart contents.
+    void removeProduct_removesProductFromCart() {
+        Cart cart = new Cart();
+        cart.setPublicId("cart-1");
+        Product product = new Product("Lamp", "Home", new BigDecimal("24.50"), "Lamp");
+        product.setId(8L);
+        cart.addProduct(product);
+
+        when(cartRepository.findByPublicId("cart-1")).thenReturn(Optional.of(cart));
+        when(productRepository.findById(8L)).thenReturn(Optional.of(product));
+        when(cartRepository.save(cart)).thenReturn(cart);
+
+        CartDto dto = cartService.removeProduct("cart-1", 8L);
+
+        assertTrue(dto.productIds().isEmpty());
+        assertFalse(cart.getProducts().contains(product));
+        assertFalse(product.getCarts().contains(cart));
+        verify(cartRepository).save(cart);
+    }
+
+    @Test
+    // Verifies missing cart yields 404 on remove.
+    void removeProduct_rejectsMissingCart() {
+        when(cartRepository.findByPublicId("missing")).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> cartService.removeProduct("missing", 1L));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Cart not found", ex.getReason());
+    }
+
+    @Test
+    // Verifies missing product yields 404 on remove.
+    void removeProduct_rejectsMissingProduct() {
+        Cart cart = new Cart();
+        cart.setPublicId("cart-1");
+        when(cartRepository.findByPublicId("cart-1")).thenReturn(Optional.of(cart));
+        when(productRepository.findById(77L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> cartService.removeProduct("cart-1", 77L));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Product not found", ex.getReason());

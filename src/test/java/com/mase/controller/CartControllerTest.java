@@ -59,6 +59,17 @@ class CartControllerTest {
     }
 
     @Test
+    // Verifies remove-product delegates to the service.
+    void removeProduct_delegatesToService() {
+        CartDto expected = new CartDto("cart-4", Set.of());
+        when(cartService.removeProduct("cart-4", 5L)).thenReturn(expected);
+
+        CartDto result = controller.removeProduct("cart-4", 5L);
+
+        assertEquals(expected, result);
+    }
+
+    @Test
     // Verifies list carts delegates to the service.
     void getAllCarts_delegatesToService() {
         List<CartDto> expected = List.of(new CartDto("cart-1", Set.of()));
