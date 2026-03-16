@@ -12,5 +12,7 @@ public interface CartService {
 
     CartDto addProduct(String cartId, Long productId);
 
+    CartDto removeProduct(String cartId, Long productId);
+
     List<CartDto> getAllCarts();
 }

@@ -49,6 +49,16 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
+    public CartDto removeProduct(String cartId, Long productId) {
+        Cart cart = findCart(cartId);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+        cart.removeProduct(product);
+        return toDto(cartRepository.save(cart));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<CartDto> getAllCarts() {
         return cartRepository.findAll(Sort.by(Sort.Direction.ASC, "id"))

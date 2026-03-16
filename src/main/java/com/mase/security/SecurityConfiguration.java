@@ -58,6 +58,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/ecommerce/v1/carts").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ecommerce/v1/carts/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ecommerce/v1/carts/*/products/*").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/ecommerce/v1/carts/*/products/*").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

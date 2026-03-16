@@ -25,6 +25,7 @@ $(function () {
 function bindAppEvents() {
     $(window).on("resize", handleCarouselResize);
     $(document).on("click", ".js-add-to-cart", handleAddToCart);
+    $(document).on("click", ".js-remove-from-cart", handleRemoveFromCart);
     $(document).on("click", ".js-carousel-prev", handleCarouselPrev);
     $(document).on("click", ".js-carousel-next", handleCarouselNext);
     $(document).on("click", ".js-category-link", handleCategoryLink);
@@ -396,6 +397,31 @@ function handleAddToCart() {
         });
 }
 
+function handleRemoveFromCart() {
+    const $button = $(this);
+    const productId = Number($button.data("productId"));
+
+    if (!state.cartId || !productId || !state.cartProductIds.includes(productId)) {
+        return;
+    }
+
+    $button.prop("disabled", true).text("Removing...");
+
+    $.ajax({
+        url: `${API_BASE}/carts/${encodeURIComponent(state.cartId)}/products/${productId}`,
+        method: "DELETE",
+        dataType: "json"
+    }).done(function (cart) {
+        hydrateCart(cart);
+        showToast("Product removed from cart.");
+    }).fail(function (xhr) {
+        showToast(getErrorMessage(xhr, "Removing this product failed."));
+    }).always(function () {
+        $button.prop("disabled", false).text("Remove");
+        syncProductButtons();
+    });
+}
+
 function getSelectedProducts() {
     const productMap = new Map(state.products.map(function (product) {
         return [Number(product.id), product];
@@ -423,9 +449,14 @@ function renderCartSidebar() {
 
     selectedProducts.forEach(function (product) {
         $container.append(`
-            <article class="cart-item">
-                <h4 class="cart-product-name h6">${escapeHtml(product.name)}</h4>
-                <p class="cart-product-meta">${escapeHtml(product.category)} | ${formatPrice(product.price)}</p>
+            <article class="cart-item d-flex align-items-start justify-content-between gap-2">
+                <div>
+                    <h4 class="cart-product-name h6">${escapeHtml(product.name)}</h4>
+                    <p class="cart-product-meta">${escapeHtml(product.category)} | ${formatPrice(product.price)}</p>
+                </div>
+                <button class="btn btn-sm btn-outline-danger js-remove-from-cart" type="button" data-product-id="${Number(product.id)}">
+                    Remove
+                </button>
             </article>
         `);
     });
