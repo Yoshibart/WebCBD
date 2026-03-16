@@ -2,6 +2,8 @@ package com.mase.error;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Collections;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -10,9 +12,13 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import jakarta.validation.ConstraintViolationException;
 
 import com.mase.dto.ApiError;
 
@@ -73,6 +79,30 @@ class GlobalExceptionHandlerTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("MALFORMED REQUEST BODY", response.getBody().message());
+        assertEquals(400, response.getBody().code());
+    }
+
+    @Test
+    // Verifies bean validation errors yield 400 response.
+    void handleMethodArgumentNotValid_returnsBadRequest() {
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "request");
+        bindingResult.addError(new FieldError("request", "name", "Name is required"));
+        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, bindingResult);
+        ResponseEntity<ApiError> response = handler.handleMethodArgumentNotValid(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("NAME IS REQUIRED", response.getBody().message());
+        assertEquals(400, response.getBody().code());
+    }
+
+    @Test
+    // Verifies constraint violations yield 400 response.
+    void handleConstraintViolation_returnsBadRequest() {
+        ConstraintViolationException ex = new ConstraintViolationException(Collections.emptySet());
+        ResponseEntity<ApiError> response = handler.handleConstraintViolation(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("VALIDATION FAILED", response.getBody().message());
         assertEquals(400, response.getBody().code());
     }
 
