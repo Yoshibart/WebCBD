@@ -7,6 +7,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,7 +38,7 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<Object> getProducts(
+    public ResponseEntity<List<ProductDto>> getProducts(
             @RequestParam(name = "page", required = false) Integer page,
             @RequestParam(name = "size", required = false) Integer size,
             @RequestParam(name = "sort", required = false) String sort) {
@@ -45,7 +47,7 @@ public class ProductController {
         }
 
         Pageable pageable = buildPageable(page, size, sort);
-        return ResponseEntity.ok(productService.getProductsPage(pageable));
+        return ResponseEntity.ok(productService.getProductsPage(pageable).getContent());
     }
 
     @PostMapping

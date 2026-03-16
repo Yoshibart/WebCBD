@@ -18,6 +18,9 @@ import com.mase.service.CartService;
 @Service
 public class CartServiceImpl implements CartService {
 
+    private static final String CART_NOT_FOUND_MESSAGE = "Cart not found";
+    private static final String PRODUCT_NOT_FOUND_MESSAGE = "Product not found";
+
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
 
@@ -43,7 +46,7 @@ public class CartServiceImpl implements CartService {
     public CartDto addProduct(String cartId, Long productId) {
         Cart cart = findCart(cartId);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, PRODUCT_NOT_FOUND_MESSAGE));
         cart.addProduct(product);
         return toDto(cartRepository.save(cart));
     }
@@ -53,7 +56,7 @@ public class CartServiceImpl implements CartService {
     public CartDto removeProduct(String cartId, Long productId) {
         Cart cart = findCart(cartId);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, PRODUCT_NOT_FOUND_MESSAGE));
         cart.removeProduct(product);
         return toDto(cartRepository.save(cart));
     }
@@ -69,7 +72,7 @@ public class CartServiceImpl implements CartService {
 
     private Cart findCart(String cartId) {
         return cartRepository.findByPublicId(cartId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, CART_NOT_FOUND_MESSAGE));
     }
 
     private CartDto toDto(Cart cart) {
