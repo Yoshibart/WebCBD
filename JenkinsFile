@@ -10,7 +10,7 @@ pipeline {
   agent any
   options { timestamps(); skipDefaultCheckout(true) }
   tools { jdk 'Java@21' }
-  triggers { pollSCM('H/5 * * * *') }
+  triggers { pollSCM('H/2 * * * *') }
 
   parameters {
     booleanParam(name: 'RUN_IT', defaultValue: false, description: 'Run integration/Selenium tests (Failsafe)')

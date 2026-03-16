@@ -28,6 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<karate.version>1.5.0</karate.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -75,6 +76,12 @@
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>io.karatelabs</groupId>
+			<artifactId>karate-junit5</artifactId>
+			<version>${karate.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -115,7 +122,7 @@
 										<limit>
 											<counter>LINE</counter>
 											<value>COVEREDRATIO</value>
-											<minimum>0.70</minimum>
+											<minimum>0.80</minimum>
 										</limit>
 									</limits>
 								</rule>
