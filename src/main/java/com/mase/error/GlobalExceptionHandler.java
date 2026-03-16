@@ -21,6 +21,8 @@ import com.mase.dto.ApiError;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String VALIDATION_FAILED_MESSAGE = "Validation failed";
+
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ApiError> handleResponseStatusException(ResponseStatusException ex) {
         return buildResponse(ex.getStatusCode(), reasonOrDefault(ex.getStatusCode(), ex.getReason()));
@@ -51,7 +53,7 @@ public class GlobalExceptionHandler {
                             ? error.getField() + " is invalid"
                             : defaultMessage;
                 })
-                .orElse("Validation failed");
+                .orElse(VALIDATION_FAILED_MESSAGE);
         return buildResponse(HttpStatus.BAD_REQUEST, message);
     }
 
@@ -62,10 +64,10 @@ public class GlobalExceptionHandler {
                 .map(violation -> {
                     String violationMessage = violation.getMessage();
                     return (violationMessage == null || violationMessage.isBlank())
-                            ? "Validation failed"
+                            ? VALIDATION_FAILED_MESSAGE
                             : violationMessage;
                 })
-                .orElse("Validation failed");
+                .orElse(VALIDATION_FAILED_MESSAGE);
         return buildResponse(HttpStatus.BAD_REQUEST, message);
     }
 
