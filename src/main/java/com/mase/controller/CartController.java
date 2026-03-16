@@ -1,5 +1,6 @@
 package com.mase.controller;
 
+import java.net.URI;
 import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
 
 import com.mase.dto.CartDto;
 import com.mase.service.CartService;
@@ -24,8 +26,10 @@ public class CartController {
     }
 
     @PostMapping
-    public CartDto createCart() {
-        return cartService.createCart();
+    public ResponseEntity<CartDto> createCart() {
+        CartDto created = cartService.createCart();
+        return ResponseEntity.created(URI.create("/api/ecommerce/v1/carts/" + created.cartId()))
+                .body(created);
     }
 
     @GetMapping("/{cartId}")

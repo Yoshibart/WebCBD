@@ -1,5 +1,6 @@
 package com.mase.controller;
 
+import java.net.URI;
 import java.util.Set;
 
 import org.springframework.data.domain.PageRequest;
@@ -48,8 +49,10 @@ public class ProductController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ProductDto createProduct(@RequestBody ProductDto productDto) {
-        return productService.createProduct(productDto);
+    public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto) {
+        ProductDto created = productService.createProduct(productDto);
+        return ResponseEntity.created(URI.create("/api/ecommerce/v1/products/" + created.id()))
+                .body(created);
     }
 
     private Pageable buildPageable(Integer page, Integer size, String sort) {
