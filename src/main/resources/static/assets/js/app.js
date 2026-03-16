@@ -19,6 +19,8 @@ const state = {
 };
 
 const carouselTimers = new Map();
+let adminProductsTable = null;
+let categoryChart = null;
 let resizeDebounceTimer = null;
 
 $(function () {
@@ -42,6 +44,7 @@ function bindAppEvents() {
     $(document).on("click", ".js-carousel-prev", handleCarouselPrev);
     $(document).on("click", ".js-carousel-next", handleCarouselNext);
     $(document).on("click", ".js-category-link", handleCategoryLink);
+    $(document).on("shown.bs.modal", "#adminProductsModal", handleAdminModalShown);
 }
 
 function refreshUi() {
@@ -189,10 +192,16 @@ function syncAuthUi() {
     const loggedIn = isLoggedIn();
     const $authButton = $(".js-auth-action");
     const $authLabel = $authButton.find(".login-text");
+    const $authIcon = $authButton.find(".login-icon .glyphicon");
     const labelText = loggedIn ? "Logout" : "Login";
 
     $authLabel.text(labelText);
     $authButton.attr("aria-label", labelText);
+    if ($authIcon.length) {
+        $authIcon
+            .toggleClass("glyphicon-log-in", !loggedIn)
+            .toggleClass("glyphicon-log-out", loggedIn);
+    }
 
     if (loggedIn) {
         $authButton.removeAttr("data-bs-toggle").removeAttr("data-bs-target");
@@ -317,6 +326,8 @@ function renderAdminProductsTable() {
                 modal.hide();
             }
         }
+        destroyAdminTable();
+        destroyAdminChart();
         return;
     }
 
@@ -327,18 +338,24 @@ function renderAdminProductsTable() {
     if (state.productsLoading) {
         $state.text("Loading products...").removeClass("d-none");
         $table.addClass("d-none");
+        destroyAdminTable();
+        renderAdminChart();
         return;
     }
 
     if (state.productsLoadFailed) {
         $state.text("Product data could not be loaded.").removeClass("d-none");
         $table.addClass("d-none");
+        destroyAdminTable();
+        renderAdminChart();
         return;
     }
 
     if (!state.products.length) {
         $state.text("No products available.").removeClass("d-none");
         $table.addClass("d-none");
+        destroyAdminTable();
+        renderAdminChart();
         return;
     }
 
@@ -357,6 +374,139 @@ function renderAdminProductsTable() {
             </tr>
         `);
     });
+
+    initializeAdminTable();
+    renderAdminChart();
+}
+
+function handleAdminModalShown() {
+    if ($.fn.DataTable && $.fn.dataTable.isDataTable("#admin-products-table")) {
+        $("#admin-products-table").DataTable().columns.adjust();
+    }
+    if (categoryChart) {
+        categoryChart.resize();
+    }
+}
+
+function initializeAdminTable() {
+    if (!$.fn.DataTable) {
+        return;
+    }
+
+    if ($.fn.dataTable.isDataTable("#admin-products-table")) {
+        $("#admin-products-table").DataTable().destroy();
+    }
+
+    adminProductsTable = $("#admin-products-table").DataTable({
+        pageLength: 6,
+        lengthChange: false,
+        info: false,
+        order: [[0, "asc"]]
+    });
+}
+
+function destroyAdminTable() {
+    if (!$.fn.DataTable) {
+        return;
+    }
+    if ($.fn.dataTable.isDataTable("#admin-products-table")) {
+        $("#admin-products-table").DataTable().destroy();
+    }
+    adminProductsTable = null;
+}
+
+function renderAdminChart() {
+    const canvas = document.getElementById("categoryChart");
+    const $state = $("#admin-chart-state");
+    const $count = $("#admin-chart-count");
+
+    if (!canvas) {
+        return;
+    }
+
+    if (!isAdmin()) {
+        destroyAdminChart();
+        return;
+    }
+
+    if (state.productsLoading) {
+        $count.text("0 categories");
+        showAdminChartState($state, "Loading chart data...");
+        destroyAdminChart();
+        return;
+    }
+
+    if (state.productsLoadFailed) {
+        $count.text("0 categories");
+        showAdminChartState($state, "Chart data could not be loaded.");
+        destroyAdminChart();
+        return;
+    }
+
+    if (!state.products.length) {
+        $count.text("0 categories");
+        showAdminChartState($state, "No products available for chart.");
+        destroyAdminChart();
+        return;
+    }
+
+    const stats = buildCategoryStats(state.products);
+    $count.text(`${stats.labels.length} categor${stats.labels.length === 1 ? "y" : "ies"}`);
+    $state.addClass("d-none").text("");
+
+    if (!window.Chart) {
+        showAdminChartState($state, "Chart library not available.");
+        destroyAdminChart();
+        return;
+    }
+
+    destroyAdminChart();
+
+    categoryChart = new Chart(canvas, {
+        type: "pie",
+        data: {
+            labels: stats.labels,
+            datasets: [{
+                label: "Products",
+                data: stats.counts,
+                backgroundColor: stats.colors
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "bottom"
+                }
+            }
+        }
+    });
+}
+
+function destroyAdminChart() {
+    if (categoryChart) {
+        categoryChart.destroy();
+        categoryChart = null;
+    }
+}
+
+function showAdminChartState($state, message) {
+    $state.text(message).removeClass("d-none");
+}
+
+function buildCategoryStats(products) {
+    const grouped = getGroupedProducts(products);
+    const labels = Object.keys(grouped);
+    const counts = labels.map(function (label) {
+        return grouped[label].length;
+    });
+    const colors = labels.map(function (_, index) {
+        const palette = ["#0f766e", "#f08a24", "#1f6f78", "#d97706", "#0ea5e9", "#7c3aed"];
+        return palette[index % palette.length];
+    });
+
+    return { labels: labels, counts: counts, colors: colors };
 }
 
 function renderShopView() {
