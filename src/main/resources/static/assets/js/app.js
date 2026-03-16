@@ -398,11 +398,14 @@ function initializeAdminTable() {
     }
 
     adminProductsTable = $("#admin-products-table").DataTable({
-        pageLength: 6,
+        pageLength: 5,
+        lengthMenu: [5],
+        paging: true,
         lengthChange: false,
         info: false,
         order: [[0, "asc"]]
     });
+    adminProductsTable.page.len(5).draw();
 }
 
 function destroyAdminTable() {
