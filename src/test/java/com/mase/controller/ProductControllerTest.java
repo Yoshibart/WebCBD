@@ -1,6 +1,7 @@
 package com.mase.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -11,6 +12,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 
 import com.mase.dto.ProductDto;
 import com.mase.service.ProductService;
@@ -26,14 +33,29 @@ class ProductControllerTest {
     private ProductController controller;
 
     @Test
-    // Verifies list products returns the service result.
-    void getAllProducts_returnsServiceResult() {
+    // Verifies list products returns the service result when no paging params are provided.
+    void getProducts_withoutPaging_returnsServiceResult() {
         List<ProductDto> expected = List.of(new ProductDto(1L, "Laptop", "Electronics", new BigDecimal("999.99"), "Laptop"));
         when(productService.getAllProducts()).thenReturn(expected);
 
-        List<ProductDto> result = controller.getAllProducts();
+        ResponseEntity<?> response = controller.getProducts(null, null, null);
 
-        assertEquals(expected, result);
+        assertEquals(expected, response.getBody());
+    }
+
+    @Test
+    // Verifies paging params route to the paged service call.
+    void getProducts_withPaging_returnsPagedResult() {
+        ProductDto dto = new ProductDto(1L, "Laptop", "Electronics", new BigDecimal("999.99"), "Laptop");
+        Page<ProductDto> expected = new PageImpl<>(
+                List.of(dto),
+                PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC, "id")),
+                1);
+        when(productService.getProductsPage(any(Pageable.class))).thenReturn(expected);
+
+        ResponseEntity<?> response = controller.getProducts(0, 5, "id,asc");
+
+        assertEquals(expected, response.getBody());
     }
 
     @Test

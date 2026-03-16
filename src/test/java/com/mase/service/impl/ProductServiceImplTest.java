@@ -15,6 +15,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -43,6 +47,26 @@ class ProductServiceImplTest {
 
         assertEquals(1, result.size());
         ProductDto dto = result.get(0);
+        assertEquals(10L, dto.id());
+        assertEquals("Laptop", dto.name());
+        assertEquals("Electronics", dto.category());
+        assertEquals(new BigDecimal("999.99"), dto.price());
+        assertEquals("Powerful laptop", dto.description());
+    }
+
+    @Test
+    // Verifies paged products are mapped to DTOs.
+    void getProductsPage_mapsEntitiesToDtos() {
+        Product product = new Product("Laptop", "Electronics", new BigDecimal("999.99"), "Powerful laptop");
+        product.setId(10L);
+        PageRequest pageRequest = PageRequest.of(0, 5);
+        when(productRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(product), pageRequest, 1));
+
+        Page<ProductDto> result = productService.getProductsPage(pageRequest);
+
+        assertEquals(1, result.getContent().size());
+        ProductDto dto = result.getContent().get(0);
         assertEquals(10L, dto.id());
         assertEquals("Laptop", dto.name());
         assertEquals("Electronics", dto.category());
