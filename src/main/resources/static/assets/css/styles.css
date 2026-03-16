@@ -98,6 +98,28 @@ a {
     font-size: 0.75rem;
 }
 
+.login-modal-content {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    background: var(--surface-strong);
+    box-shadow: var(--shadow-soft);
+}
+
+.login-modal-content .modal-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+}
+
+.login-modal-content .form-control {
+    border-radius: 14px;
+    border-color: rgba(16, 34, 53, 0.15);
+}
+
+.login-modal-content .btn-dark {
+    border: none;
+    background: linear-gradient(135deg, #102235, #1f6f78);
+}
+
 .catalog-main {
     padding-top: 1.25rem;
     padding-bottom: 4rem;

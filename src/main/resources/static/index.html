@@ -17,7 +17,7 @@
                 <div class="container d-flex align-items-center justify-content-between">
                     <a class="navbar-brand brand-mark" href="/">WebCBD</a>
                     <div class="auth-slot">
-                        <button class="login-entry" type="button" aria-label="Login">
+                        <button class="login-entry" type="button" aria-label="Login" data-bs-toggle="modal" data-bs-target="#loginModal" aria-controls="loginModal">
                             <span class="login-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" focusable="false">
                                     <path d="M10 17v-1c0-1.66 3.13-2.5 5-2.5s5 .84 5 2.5v1H10zm5-5c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zM4 7h7v2H6v8h5v2H4V7zm5.59 4 2.7-2.7 1.41 1.4L13.41 11H20v2h-6.59l1.29 1.29-1.41 1.41L9.59 13l-1-1 1-1z"/>
@@ -73,6 +73,32 @@
                 </div>
             </section>
         </main>
+    </div>
+
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content login-modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title" id="loginModalLabel">LogIn</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="login-form" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label" for="login-username">Username</label>
+                            <input class="form-control" id="login-username" type="text" autocomplete="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="login-password">Password</label>
+                            <input class="form-control" id="login-password" type="password" autocomplete="current-password" required>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                        </div>
+                        <button class="btn btn-dark w-100" type="button">LogIn</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
