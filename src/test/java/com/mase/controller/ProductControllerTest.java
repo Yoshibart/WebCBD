@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -147,8 +148,10 @@ class ProductControllerTest {
         ProductDto saved = new ProductDto(2L, "Phone", "Devices", new BigDecimal("199.99"), "Phone");
         when(productService.createProduct(input)).thenReturn(saved);
 
-        ProductDto result = controller.createProduct(input);
+        ResponseEntity<ProductDto> response = controller.createProduct(input);
 
-        assertEquals(saved, result);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(URI.create("/api/ecommerce/v1/products/2"), response.getHeaders().getLocation());
+        assertEquals(saved, response.getBody());
     }
 }

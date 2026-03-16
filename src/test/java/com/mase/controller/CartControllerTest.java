@@ -5,12 +5,15 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Set;
+import java.net.URI;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import com.mase.dto.CartDto;
 import com.mase.service.CartService;
@@ -31,9 +34,11 @@ class CartControllerTest {
         CartDto expected = new CartDto("cart-1", Set.of());
         when(cartService.createCart()).thenReturn(expected);
 
-        CartDto result = controller.createCart();
+        ResponseEntity<CartDto> response = controller.createCart();
 
-        assertEquals(expected, result);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(URI.create("/api/ecommerce/v1/carts/cart-1"), response.getHeaders().getLocation());
+        assertEquals(expected, response.getBody());
     }
 
     @Test
