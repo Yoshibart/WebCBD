@@ -38,7 +38,7 @@ class ProductControllerTest {
         List<ProductDto> expected = List.of(new ProductDto(1L, "Laptop", "Electronics", new BigDecimal("999.99"), "Laptop"));
         when(productService.getAllProducts()).thenReturn(expected);
 
-        ResponseEntity<?> response = controller.getProducts(null, null, null);
+        ResponseEntity<Object> response = controller.getProducts(null, null, null);
 
         assertEquals(expected, response.getBody());
     }
@@ -53,7 +53,7 @@ class ProductControllerTest {
                 1);
         when(productService.getProductsPage(any(Pageable.class))).thenReturn(expected);
 
-        ResponseEntity<?> response = controller.getProducts(0, 5, "id,asc");
+        ResponseEntity<Object> response = controller.getProducts(0, 5, "id,asc");
 
         assertEquals(expected, response.getBody());
     }

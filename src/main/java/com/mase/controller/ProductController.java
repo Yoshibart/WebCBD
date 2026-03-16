@@ -1,6 +1,5 @@
 package com.mase.controller;
 
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.domain.PageRequest;
@@ -35,7 +34,7 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getProducts(
+    public ResponseEntity<Object> getProducts(
             @RequestParam(name = "page", required = false) Integer page,
             @RequestParam(name = "size", required = false) Integer size,
             @RequestParam(name = "sort", required = false) String sort) {
