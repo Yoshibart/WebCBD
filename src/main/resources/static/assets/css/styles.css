@@ -98,6 +98,53 @@ a {
     font-size: 0.75rem;
 }
 
+.admin-entry {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.08);
+    color: #f7f5f2;
+    cursor: pointer;
+    transition: transform 180ms ease, background-color 180ms ease;
+}
+
+.admin-entry:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.admin-icon svg {
+    width: 1.35rem;
+    height: 1.35rem;
+    fill: currentColor;
+}
+
+.admin-state {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+}
+
+.admin-products-table {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--surface-strong);
+}
+
+.admin-modal-content {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    background: var(--surface-strong);
+    box-shadow: var(--shadow-soft);
+}
+
 .login-modal-content {
     border-radius: var(--radius-lg);
     border: 1px solid var(--line);

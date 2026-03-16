@@ -1,12 +1,21 @@
 const API_BASE = "/api/ecommerce/v1";
 const CART_ID_STORAGE_KEY = "webcbd_guest_cart_id";
+const AUTH_STORAGE_KEY = "webcbd_auth_state";
 
 const state = {
     products: [],
     productsLoading: true,
     productsLoadFailed: false,
     cartId: window.localStorage.getItem(CART_ID_STORAGE_KEY) || "",
-    cartProductIds: []
+    cartProductIds: [],
+    auth: {
+        token: "",
+        tokenType: "Bearer",
+        username: "",
+        email: "",
+        role: "",
+        expiresAt: 0
+    }
 };
 
 const carouselTimers = new Map();
@@ -14,6 +23,7 @@ let resizeDebounceTimer = null;
 
 $(function () {
     bindAppEvents();
+    initializeAuth();
     refreshUi();
     loadProducts();
 
@@ -26,6 +36,9 @@ function bindAppEvents() {
     $(window).on("resize", handleCarouselResize);
     $(document).on("click", ".js-add-to-cart", handleAddToCart);
     $(document).on("click", ".js-remove-from-cart", handleRemoveFromCart);
+    $(document).on("click", ".js-auth-action", handleAuthAction);
+    $(document).on("submit", "#login-form", handleLoginSubmit);
+    $(document).on("click", ".js-admin-toggle", handleAdminToggle);
     $(document).on("click", ".js-carousel-prev", handleCarouselPrev);
     $(document).on("click", ".js-carousel-next", handleCarouselNext);
     $(document).on("click", ".js-category-link", handleCategoryLink);
@@ -35,6 +48,8 @@ function refreshUi() {
     renderShopView();
     renderCartSidebar();
     syncProductButtons();
+    syncAuthUi();
+    renderAdminProductsTable();
 }
 
 function loadProducts() {
@@ -100,6 +115,248 @@ function hydrateCart(cart) {
     }
 
     refreshUi();
+}
+
+function initializeAuth() {
+    const stored = readStoredAuth();
+
+    if (stored && stored.token) {
+        if (isAuthExpired(stored)) {
+            clearAuthStorage();
+        } else {
+            state.auth = {
+                token: stored.token || "",
+                tokenType: stored.tokenType || "Bearer",
+                username: stored.username || "",
+                email: stored.email || "",
+                role: stored.role || "",
+                expiresAt: Number(stored.expiresAt || 0)
+            };
+        }
+    }
+}
+
+function readStoredAuth() {
+    const sessionValue = window.sessionStorage.getItem(AUTH_STORAGE_KEY);
+    const raw = sessionValue;
+
+    if (!raw) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(raw);
+    } catch (error) {
+        clearAuthStorage();
+        return null;
+    }
+}
+
+function saveAuth() {
+    const payload = JSON.stringify(state.auth);
+    window.sessionStorage.setItem(AUTH_STORAGE_KEY, payload);
+}
+
+function clearAuthStorage() {
+    window.sessionStorage.removeItem(AUTH_STORAGE_KEY);
+}
+
+function clearAuthState() {
+    state.auth = {
+        token: "",
+        tokenType: "Bearer",
+        username: "",
+        email: "",
+        role: "",
+        expiresAt: 0
+    };
+    clearAuthStorage();
+}
+
+function isAuthExpired(auth) {
+    return auth && auth.expiresAt && Date.now() > Number(auth.expiresAt);
+}
+
+function isLoggedIn() {
+    return Boolean(state.auth.token);
+}
+
+function isAdmin() {
+    return isLoggedIn() && state.auth.role === "ADMIN";
+}
+
+function syncAuthUi() {
+    const loggedIn = isLoggedIn();
+    const $authButton = $(".js-auth-action");
+    const $authLabel = $authButton.find(".login-text");
+    const labelText = loggedIn ? "Logout" : "Login";
+
+    $authLabel.text(labelText);
+    $authButton.attr("aria-label", labelText);
+
+    if (loggedIn) {
+        $authButton.removeAttr("data-bs-toggle").removeAttr("data-bs-target");
+    } else {
+        $authButton.attr("data-bs-toggle", "modal").attr("data-bs-target", "#loginModal");
+    }
+
+    const $adminButton = $(".js-admin-toggle");
+    const adminVisible = isAdmin();
+    $adminButton.toggleClass("d-none", !adminVisible);
+}
+
+function handleAuthAction(event) {
+    if (!isLoggedIn()) {
+        return;
+    }
+
+    event.preventDefault();
+    performLogout();
+}
+
+function handleLoginSubmit(event) {
+    event.preventDefault();
+
+    if (isLoggedIn()) {
+        return;
+    }
+
+    const username = String($("#login-username").val() || "").trim();
+    const password = String($("#login-password").val() || "");
+    if (!username || !password) {
+        showToast("Enter a username and password.");
+        return;
+    }
+
+    setLoginFormLoading(true);
+
+    performLogin(username, password).always(function () {
+        setLoginFormLoading(false);
+    });
+}
+
+function performLogin(username, password) {
+    return $.ajax({
+        url: `${API_BASE}/auth/login`,
+        method: "POST",
+        contentType: "application/json",
+        dataType: "json",
+        data: JSON.stringify({
+            username: username,
+            password: password
+        })
+    }).done(function (authResponse) {
+        const expiresIn = Number(authResponse.expiresIn || 0);
+        state.auth = {
+            token: authResponse.accessToken || "",
+            tokenType: authResponse.tokenType || "Bearer",
+            username: authResponse.username || username,
+            email: authResponse.email || "",
+            role: authResponse.role || "",
+            expiresAt: expiresIn ? Date.now() + expiresIn * 1000 : 0
+        };
+        saveAuth();
+        syncAuthUi();
+        renderAdminProductsTable();
+        showToast(`Welcome ${state.auth.username || "back"}.`);
+        $("#login-password").val("");
+        const modalElement = document.getElementById("loginModal");
+        if (modalElement) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            modal.hide();
+        }
+    }).fail(function (xhr) {
+        showToast(getErrorMessage(xhr, "Login failed."));
+    });
+}
+
+function performLogout() {
+    const token = state.auth.token;
+    const tokenType = state.auth.tokenType || "Bearer";
+    const request = token ? $.ajax({
+        url: `${API_BASE}/auth/logout`,
+        method: "POST",
+        headers: {
+            Authorization: `${tokenType} ${token}`
+        }
+    }) : $.Deferred().resolve().promise();
+
+    return request.always(function () {
+        clearAuthState();
+        syncAuthUi();
+        renderAdminProductsTable();
+        showToast("Logged out.");
+    });
+}
+
+function setLoginFormLoading(isLoading) {
+    const $form = $("#login-form");
+    $form.find("input, button").prop("disabled", isLoading);
+    const $submit = $form.find("button[type=\"submit\"]");
+    $submit.text(isLoading ? "Signing in..." : "Sign in");
+}
+
+function handleAdminToggle() {
+    if (!isAdmin()) {
+        return;
+    }
+    renderAdminProductsTable();
+    const modalElement = document.getElementById("adminProductsModal");
+    if (modalElement) {
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        modal.show();
+    }
+}
+
+function renderAdminProductsTable() {
+    if (!isAdmin()) {
+        const modalElement = document.getElementById("adminProductsModal");
+        if (modalElement) {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
+        }
+        return;
+    }
+
+    const $state = $("#admin-products-state");
+    const $table = $("#admin-products-table");
+    const $tbody = $("#admin-products-table-body");
+
+    if (state.productsLoading) {
+        $state.text("Loading products...").removeClass("d-none");
+        $table.addClass("d-none");
+        return;
+    }
+
+    if (state.productsLoadFailed) {
+        $state.text("Product data could not be loaded.").removeClass("d-none");
+        $table.addClass("d-none");
+        return;
+    }
+
+    if (!state.products.length) {
+        $state.text("No products available.").removeClass("d-none");
+        $table.addClass("d-none");
+        return;
+    }
+
+    $state.addClass("d-none");
+    $table.removeClass("d-none");
+    $tbody.empty();
+
+    state.products.forEach(function (product) {
+        $tbody.append(`
+            <tr>
+                <td>${Number(product.id)}</td>
+                <td>${escapeHtml(product.name)}</td>
+                <td>${escapeHtml(product.category)}</td>
+                <td>${formatPrice(product.price)}</td>
+                <td>${escapeHtml(product.description)}</td>
+            </tr>
+        `);
+    });
 }
 
 function renderShopView() {
