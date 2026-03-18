@@ -31,14 +31,6 @@ pipeline {
       }
     }
 
-    stage('Package') {
-      steps {
-        script {
-          runMvn("-B -DskipTests package")
-        }
-      }
-    }
-
     stage('SonarQube Analysis') {
       steps {
         script {
