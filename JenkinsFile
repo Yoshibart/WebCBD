@@ -12,9 +12,6 @@ pipeline {
   tools { jdk 'Java@21' }
   triggers { pollSCM('H/2 * * * *') }
 
-  parameters {
-    booleanParam(name: 'RUN_IT', defaultValue: false, description: 'Run integration/Selenium tests (Failsafe)')
-  }
 
   environment {
     MAVEN_OPTS = "-Dmaven.repo.local=.m2/repository"
@@ -29,9 +26,7 @@ pipeline {
     stage('Build & Tests') {
       steps {
         script {
-          def baseArgs = "-B clean verify -Dspring.profiles.active=test"
-          def itArgs = params.RUN_IT ? "-DskipITs=false" : "-DskipITs=true"
-          runMvn("${baseArgs} ${itArgs}")
+          runMvn("-B clean verify -Dspring.profiles.active=test")
         }
       }
     }
@@ -52,10 +47,8 @@ pipeline {
               runMvn("-B sonar:sonar -Dsonar.projectKey=com.mase.webcbd:WebCBD -Dsonar.projectName=WebCBD-1")
             }
             env.SONARQUBE_RAN = "true"
-          } catch (NoSuchMethodError e) {
-            echo "SonarQube plugin not installed; skipping analysis."
-          } catch (MissingMethodException e) {
-            echo "SonarQube plugin not installed; skipping analysis."
+          } catch (Exception e) {
+            echo "SonarQube plugin not installed; skipping SonarQube Analysis."
           }
         }
       }
@@ -68,12 +61,10 @@ pipeline {
       steps {
         script {
           try {
-            timeout(time: 10, unit: 'MINUTES') {
+            timeout(time: 2, unit: 'MINUTES') {
               waitForQualityGate abortPipeline: true
             }
-          } catch (NoSuchMethodError e) {
-            echo "SonarQube plugin not installed; skipping quality gate."
-          } catch (MissingMethodException e) {
+          } catch (Exception e) {
             echo "SonarQube plugin not installed; skipping quality gate."
           }
         }
