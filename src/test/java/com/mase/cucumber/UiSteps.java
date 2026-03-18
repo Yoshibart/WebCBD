@@ -95,7 +95,7 @@ class UiSteps {
 
     @And("the cart should list {int} item")
     public void theCartShouldListItems(int expectedCount) {
-        wait.until(driver -> driver.findElements(By.cssSelector("#cart-items .cart-item")).size() == expectedCount);
+        wait.until(webDriver -> webDriver.findElements(By.cssSelector("#cart-items .cart-item")).size() == expectedCount);
         int actual = driver.findElements(By.cssSelector("#cart-items .cart-item")).size();
         assertEquals(expectedCount, actual);
     }
@@ -122,7 +122,7 @@ class UiSteps {
     public void iShouldSeeTheAdminProductsTable() {
         wait.until(ExpectedConditions.not(ExpectedConditions.attributeContains(
             By.id("admin-products-table"), "class", "d-none")));
-        wait.until(driver -> driver.findElements(By.cssSelector("#admin-products-table-body tr")).size() > 0);
+        wait.until(webDriver -> webDriver.findElements(By.cssSelector("#admin-products-table-body tr")).size() > 0);
         int rows = driver.findElements(By.cssSelector("#admin-products-table-body tr")).size();
         assertTrue(rows > 0, "Expected admin products table to have rows");
     }
