@@ -1,5 +1,3 @@
-def sonarRan = false
-
 def runMvn(String args) {
   if (isUnix()) {
     sh "./mvnw ${args}"
@@ -17,7 +15,6 @@ pipeline {
 
   environment {
     MAVEN_OPTS = "-Dmaven.repo.local=.m2/repository"
-    SONARQUBE_RAN = "false"
   }
 
   stages {
@@ -36,14 +33,15 @@ pipeline {
     stage('SonarQube Analysis') {
       steps {
         script {
+          env.SONARQUBE_RAN = "false"
           try {
             withSonarQubeEnv('LocalSonar') {
               runMvn("-B sonar:sonar -Dsonar.projectKey=com.mase.webcbd:WebCBD -Dsonar.projectName=WebCBD-1")
             }
-            sonarRan = true
+            env.SONARQUBE_RAN = "true"
           } catch (Exception e) {
             echo "SonarQube plugin not installed; skipping SonarQube Analysis."
-            sonarRan = false
+            env.SONARQUBE_RAN = "false"
           }
         }
       }
@@ -51,7 +49,7 @@ pipeline {
 
     stage('Quality Gate') {
       when {
-        expression { return sonarRan }
+        expression { return env.SONARQUBE_RAN == "true" }
       }
       steps {
         script {
