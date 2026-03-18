@@ -29,6 +29,9 @@
 	<properties>
 		<java.version>21</java.version>
 		<karate.version>1.5.0</karate.version>
+		<cucumber.version>7.14.0</cucumber.version>
+		<selenium.version>4.21.0</selenium.version>
+		<webdrivermanager.version>5.7.0</webdrivermanager.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -84,6 +87,36 @@
 			<groupId>io.karatelabs</groupId>
 			<artifactId>karate-junit5</artifactId>
 			<version>${karate.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.cucumber</groupId>
+			<artifactId>cucumber-java</artifactId>
+			<version>${cucumber.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.cucumber</groupId>
+			<artifactId>cucumber-junit-platform-engine</artifactId>
+			<version>${cucumber.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.cucumber</groupId>
+			<artifactId>cucumber-spring</artifactId>
+			<version>${cucumber.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-java</artifactId>
+			<version>${selenium.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.github.bonigarcia</groupId>
+			<artifactId>webdrivermanager</artifactId>
+			<version>${webdrivermanager.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
