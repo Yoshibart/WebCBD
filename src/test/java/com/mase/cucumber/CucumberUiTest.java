@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
+// Cucumber's replacement for this runner does not yet support our JUnit 5 discovery flow.
+@SuppressWarnings({"deprecation", "java:S1874"})
 @Cucumber
 class CucumberUiTest {
 
