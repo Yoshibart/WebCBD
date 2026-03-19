@@ -86,6 +86,19 @@ pipeline {
         } else {
           echo "JaCoCo report not found; skipping HTML publish."
         }
+
+        if (fileExists('target/karate-reports/karate-summary.html')) {
+          publishHTML(target: [
+            reportDir: 'target/karate-reports',
+            reportFiles: 'karate-summary.html',
+            reportName: 'Karate Test Report',
+            keepAll: true,
+            alwaysLinkToLastBuild: true,
+            allowMissing: true
+          ])
+        } else {
+          echo "Karate report not found; skipping HTML publish."
+        }
       }
     }
   }
