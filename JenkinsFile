@@ -47,6 +47,8 @@ pipeline {
       }
     }
 
+
+
     stage('Quality Gate') {
       when {
         expression { return env.SONARQUBE_RAN == "true" }
